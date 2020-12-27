@@ -1,0 +1,33 @@
+{
+  "name": "discord-quote-bot",
+  "version": "1.0.0",
+  "main": "dist/app.js",
+  "author": "DeadlySurprise",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "start": "node dist/app.js",
+    "build": "npm run build-ts",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
+    "watch-node": "nodemon dist/app.js",
+    "build-ts": "tsc",
+    "watch-ts": "tsc -w",
+    "tslint": "tslint -c tslint.json -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.0",
+    "@types/axios": "^0.14.0",
+    "concurrently": "^4.1.0",
+    "nodemon": "^1.18.9",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.3"
+  },
+  "dependencies": {
+    "discord.js": "https://github.com/discordjs/discord.js.git#ae7269088b99dfff614ea66ba9c67baeb1bd9169",
+    "dotenv": "^6.2.0",
+    "node-opus": "^0.3.1",
+    "random": "^2.0.13",
+    "bufferutil": "^4.0.1",
+    "axios": "^0.18.0"
+  }
+}
