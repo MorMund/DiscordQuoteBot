@@ -3,9 +3,9 @@ import Axios, { AxiosStatic } from "axios";
 import {
     Client,
     DMChannel,
-    GroupDMChannel,
     GuildMember,
     MessageAttachment,
+    NewsChannel,
     TextChannel,
     VoiceChannel
 } from "discord.js";
@@ -30,7 +30,7 @@ interface IArgument {
 }
 interface ICallerContext {
     sender: GuildMember;
-    channel: TextChannel | DMChannel | GroupDMChannel;
+    channel: TextChannel | DMChannel | NewsChannel;
     attachments: MessageAttachment[];
 }
 interface ICallerArgs {
@@ -83,6 +83,25 @@ const commands: ICommand[] = [
         args: [{ name: "quote", description: "Name of the quote to play." }],
         requiredArgsCount: 0,
         call: playQuote
+    },
+    {
+        name: "q",
+        description:
+            "Plays the quote with the given name or a random quote if no name was given." +
+            "Example \"-q tacticalnuke\"",
+        args: [{ name: "quote", description: "Name of the quote to play." }],
+        requiredArgsCount: 0,
+        call: playQuote
+    },
+    {
+        name: "projectQuote",
+        description: "Internal use for webhooks",
+        args: [
+            { name: "quote", description: "Name of the quote to play" },
+            { name: "nickname", description: "Nickname of the person in whose channel the quote will be played" }
+        ],
+        requiredArgsCount: 2,
+        call: projectQuote
     },
     {
         name: "rquote",
@@ -164,7 +183,7 @@ client.on("message", async (msg) => {
     try {
         await command.call(callerArgs);
     } catch (error) {
-        console.error(`Caught error when running ${commandName}}:\n${error}\nContext:${callerArgs}`);
+        console.error(`Caught error when running ${commandName}}:\n${error}\nContext:${JSON.stringify(callerArgs, null, 4)}`);
     }
 });
 
@@ -227,6 +246,34 @@ async function playRandomQuote(args: { context: ICallerContext, moduleName?: str
         channel.send(`Playing random quote ${basename(soundFile)} from ${moduleName}.`);
         playSound(sender.voice.channel, soundFile);
     }
+}
+
+async function projectQuote(args: { context: ICallerContext, quote: string, nickname: string }) {
+    // Web-hooks aren't a sender
+     if (!args.context.sender !== null) {
+        args.context.channel.send("Quote projection can only be used by webhooks. Use -quote instead.")
+    }
+
+    const serverChannels = Array.from(client.channels.cache.values())
+    const serverVoiceChannels = serverChannels
+        .filter(channel => channel.type === "voice")
+        .map(channel => channel as VoiceChannel)
+    const projectTarget = serverVoiceChannels.find(channel => {
+        const channelMembers = Array.from(channel.members.values())
+        return channelMembers.some((member) => member.nickname === args.nickname)
+    })
+
+    if (projectTarget === undefined) {
+        args.context.channel.send(`Target ${args.nickname} not found`);
+    }
+
+    const soundFile = (await quotes).getQuote(args.quote);
+
+    if (soundFile === undefined) {
+        args.context.channel.send(`Quote ${args.quote} not found`);
+    }
+
+    playSound(projectTarget, soundFile)
 }
 
 async function listModule(args: { context: ICallerContext, moduleName?: string, page?: string }) {

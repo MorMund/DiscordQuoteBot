@@ -1,4 +1,4 @@
-FROM node:11
+FROM node:15
 COPY package.json yarn.lock /app/
 WORKDIR /app/
 RUN apt-get update && apt-get install -y ffmpeg && yarn
